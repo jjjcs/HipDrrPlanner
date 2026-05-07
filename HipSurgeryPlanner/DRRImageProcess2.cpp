@@ -43,8 +43,43 @@ DRRImageProcess::~DRRImageProcess()
 {
 }
 
-void cal_proj_matrix( )
+void DRRImageProcess::cal_proj_matrix(vtkMatrix4x4* mat, 
+	InterpolatorType::InputPointType focalpoint, 
+	double* center, float ssd, int* size, float* spacing)
 {
+	Eigen::Matrix4d mat_eigen  = vtkMatrixToEigen(mat);
+
+	Eigen::Vector4d focalpoint_homogeneous, drr_center_homogeneous;
+	focalpoint_homogeneous << focalpoint[0], focalpoint[1], focalpoint[2], 1.0;
+	drr_center_homogeneous << center[0], center[1], center[2], 1.0;
+
+	Eigen::Vector4d camera_origin = mat_eigen * focalpoint_homogeneous;
+
+	Eigen::Matrix4d extrinsic_matrix = mat_eigen;
+	extrinsic_matrix(0, 3) = camera_origin(0);
+	extrinsic_matrix(1, 3) = camera_origin(1);
+	extrinsic_matrix(2, 3) = camera_origin(2);
+	Eigen::Matrix4d extrinsic_matrix_inv = extrinsic_matrix.inverse();
+
+	Eigen::Matrix3d intrinsic_matrix;
+	intrinsic_matrix << 
+		ssd/spacing[0], 0, size[0]/2,
+		0, ssd / spacing[1], size[1]/2,
+		0, 0, 1;
+
+	Eigen::MatrixXd proj_matrix = intrinsic_matrix * extrinsic_matrix.topRows<3>();
+
+	Eigen::Vector4d p0;
+	p0<< -64.2198, 3.25, 1391.11, 1;
+	Eigen::Vector4d p1;
+	p1<< -66.4155, 22.876, 1319.22, 1;
+
+	Eigen::Vector3d proj_p0, proj_p1;
+	proj_p0 = proj_matrix * p0;
+	proj_p1 = proj_matrix * p1;
+
+	std::cout << proj_p0 / proj_p0(2) << std::endl;
+	std::cout << proj_p1 / proj_p1(2)<< std::endl;
 }
 
 GrayImageType::Pointer DRRImageProcess::DRRProcess(ImageType::Pointer image)
