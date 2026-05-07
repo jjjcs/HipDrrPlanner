@@ -60,7 +60,8 @@ void DRRImageProcess::cal_proj_matrix(vtkMatrix4x4* mat,
 	extrinsic_matrix(1, 3) = camera_origin(1);
 	extrinsic_matrix(2, 3) = camera_origin(2);
 	Eigen::Matrix4d extrinsic_matrix_inv = extrinsic_matrix.inverse();
-
+	//转移矩阵的被动变换
+	
 	Eigen::Matrix3d intrinsic_matrix;
 	intrinsic_matrix << 
 		ssd/spacing[0], 0, size[0]/2,
